@@ -36,7 +36,7 @@ function halResourceTypesConfig(halResourceTypes:HalResourceTypesService) {
       attrTypes: {
         parent: 'WorkPackage',
         children: 'WorkPackage',
-        relations: 'Relation',
+        relations: 'Relation'
       }
     },
     Activity: {
