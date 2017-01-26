@@ -27,40 +27,36 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-class MenuItems::WikiMenuItem < MenuItem
-  belongs_to :wiki, foreign_key: 'navigatable_id'
+module Redmine::MenuManager::WikiMenuHelper
+  def build_wiki_menus(project)
+    return unless project.enabled_module_names.include? 'wiki'
+    project_wiki = project.wiki
 
-  scope :main_items, -> (wiki_id) {
-    where(navigatable_id: wiki_id, parent_id: nil)
-      .includes(:children)
-      .order('id ASC')
-  }
+    MenuItems::WikiMenuItem.main_items(project_wiki).each do |main_item|
+      Redmine::MenuManager.loose :project_menu do |menu|
+        menu.push main_item.menu_identifier,
+                  { controller: '/wiki', action: 'show', id: main_item.slug },
+                  param: :project_id,
+                  caption: main_item.title,
+                  after: :repository,
+                  html: { class: 'icon2 icon-wiki' }
 
-  def slug
-    name.to_url
+        main_item.children.each do |child|
+          push_wiki_menu_subitem(menu, main_item, child)
+        end
+      end
+    end
   end
 
-  def item_class
-    slug
-  end
-
-  def menu_identifier
-    "wiki-#{slug}".to_sym
-  end
-
-  def index_page
-    !!options[:index_page]
-  end
-
-  def index_page=(value)
-    options[:index_page] = value
-  end
-
-  def new_wiki_page
-    !!options[:new_wiki_page]
-  end
-
-  def new_wiki_page=(value)
-    options[:new_wiki_page] = value
+  def push_wiki_menu_subitem(menu, main_item, child)
+    menu.push child.menu_identifier,
+              { controller: '/wiki', action: 'show', id: child.slug },
+              param: :project_id,
+              caption: child.title,
+              html:    { class: 'icon2 icon-wiki2' },
+              parent: main_item.menu_identifier
+  rescue ArgumentError => e
+    Rails.logger.error "Failed to add wiki item #{child.slug} to wiki menu: #{e}. Deleting it."
+    child.destroy
   end
 end
