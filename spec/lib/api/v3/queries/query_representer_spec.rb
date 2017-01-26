@@ -190,6 +190,30 @@ describe ::API::V3::Queries::QueryRepresenter do
             .at_path('_links/columns')
         end
       end
+
+      context 'without group_by' do
+        it_behaves_like 'has a titled link' do
+          let(:href) { nil }
+          let(:link) { 'groupBy' }
+          let(:title) { nil }
+        end
+      end
+
+      context 'with group_by' do
+        let(:query) do
+          query = FactoryGirl.build_stubbed(:query, project: project)
+
+          query.group_by = 'status'
+
+          query
+        end
+
+        it_behaves_like 'has a titled link' do
+          let(:href) { 'urn:openproject-org:api:v3:queries:group_bys:status' }
+          let(:link) { 'groupBy' }
+          let(:title) { 'Status' }
+        end
+      end
     end
 
     it 'should show an id' do
@@ -206,22 +230,6 @@ describe ::API::V3::Queries::QueryRepresenter do
 
     it 'should indicate whether the query is publicly visible' do
       is_expected.to be_json_eql(query.is_public.to_json).at_path('isPublic')
-    end
-
-    describe 'grouping' do
-      let(:query) { FactoryGirl.build_stubbed(:query, group_by: 'assigned_to') }
-
-      it 'should show the grouping column' do
-        is_expected.to be_json_eql('assignee'.to_json).at_path('groupBy')
-      end
-
-      context 'without grouping' do
-        let(:query) { FactoryGirl.build_stubbed(:query, group_by: nil) }
-
-        it 'should show no grouping column' do
-          is_expected.to be_json_eql(nil.to_json).at_path('groupBy')
-        end
-      end
     end
 
     describe 'with filters' do
