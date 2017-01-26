@@ -141,6 +141,55 @@ describe ::API::V3::Queries::QueryRepresenter do
           let(:href) { expected_href }
         end
       end
+
+      context 'without columns' do
+        let(:query) do
+          query = FactoryGirl.build_stubbed(:query, project: project)
+
+          # need to write bogus here because the query
+          # will otherwise sport the default columns
+          query.column_names = ['blubs']
+
+          query
+        end
+
+        it 'has an empty columns array' do
+          is_expected
+            .to be_json_eql([].to_json)
+            .at_path('_links/columns')
+        end
+      end
+
+      context 'with columns' do
+        let(:query) do
+          query = FactoryGirl.build_stubbed(:query, project: project)
+
+          query.column_names = ['status', 'assigned_to', 'updated_at']
+
+          query
+        end
+
+        it 'has an array of columns' do
+          status = {
+            href: 'urn:openproject-org:api:v3:queries:columns:status',
+            title: 'Status'
+          }
+          assignee = {
+            href: 'urn:openproject-org:api:v3:queries:columns:assignee',
+            title: 'Assignee'
+          }
+          subproject = {
+            href: 'urn:openproject-org:api:v3:queries:columns:updatedAt',
+            title: 'Updated on'
+          }
+
+          expected = [status, assignee, subproject]
+
+          is_expected
+            .to be_json_eql(expected.to_json)
+            .at_path('_links/columns')
+        end
+      end
     end
 
     it 'should show an id' do
@@ -205,14 +254,6 @@ describe ::API::V3::Queries::QueryRepresenter do
         is_expected
           .to be_json_eql([['subject', 'asc'], ['assignee', 'desc']].to_json)
           .at_path('sortCriteria')
-      end
-    end
-
-    describe 'with columns' do
-      let(:query) { FactoryGirl.build_stubbed(:query, column_names: ['subject', 'assigned_to']) }
-
-      it 'should render the filters' do
-        is_expected.to be_json_eql(['subject', 'assignee'].to_json).at_path('columnNames')
       end
     end
 

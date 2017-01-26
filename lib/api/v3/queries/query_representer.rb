@@ -67,6 +67,15 @@ module API
           }
         end
 
+        links :columns do
+          represented.columns.map do |column|
+            {
+              href: "urn:openproject-org:api:v3:queries:columns:#{convert_attribute column.name}",
+              title: column.caption
+            }
+          end
+        end
+
         linked_property :user
         linked_property :project
 
@@ -83,12 +92,6 @@ module API
                    end
                  }
         property :is_public, getter: -> (*) { is_public }
-        property :column_names,
-                 exec_context: :decorator,
-                 getter: ->(*) {
-                   return nil unless represented.column_names
-                   represented.column_names.map { |name| convert_attribute name }
-                 }
         property :sort_criteria,
                  exec_context: :decorator,
                  getter: ->(*) {
